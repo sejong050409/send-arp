@@ -77,12 +77,11 @@ void getMac(pcap_t* pcap,
             uint32_t myIp,
             uint32_t targetIp,
             uint8_t* resultMac) {
-
     eth_arp_packet packet;
     ArpRequest(packet, myMac, myIp, targetIp);
 
     pcap_sendpacket(pcap, (const u_char*)&packet, sizeof(packet));
-
+ 
     struct pcap_pkthdr* header;
     const u_char* recvPacket;
 
@@ -109,40 +108,41 @@ void usage() {
 
 int main(int argc, char* argv[]) {
 
-    if (argc != 4 || argc % 2 != 0) {
+    if (argc <  4 || argc % 2 != 0) {
         usage();
         return -1;
     }
 
-    char* dev = argv[1];
-    uint32_t senderIp = ntohl(inet_addr(argv[2]));
-    uint32_t targetIp = ntohl(inet_addr(argv[3]));
+    	char* dev = argv[1];
+    	uint32_t senderIp = ntohl(inet_addr(argv[2]));
+    	uint32_t targetIp = ntohl(inet_addr(argv[3]));
 
-    char errbuf[PCAP_ERRBUF_SIZE];
-    pcap_t* pcap = pcap_open_live(dev, BUFSIZ, 1, 1, errbuf);
+    	char errbuf[PCAP_ERRBUF_SIZE];
+    	pcap_t* pcap = pcap_open_live(dev, BUFSIZ, 1, 1, errbuf);
 
-    if (pcap == nullptr) {
-        printf("pcap_open_live error: %s\n", errbuf);
-        return -1;
-    }
+    	if (pcap == nullptr) {
+        	printf("pcap_open_live error: %s\n", errbuf);
+        	return -1;
+    	}
 
-    uint8_t myMac[6];
-    uint32_t myIp;
+    	uint8_t myMac[6];
+    	uint32_t myIp;
 
-    if (!getMyInfo(dev, myMac, myIp)) {
-        printf("Failed to get my info\n");
-        return -1;
-    }
+    	if (!getMyInfo(dev, myMac, myIp)) {
+        	printf("Failed to get my info\n");
+        	return -1;
+    	}
 
-    uint8_t senderMac[6];
-    getMac(pcap, myMac, myIp, senderIp, senderMac);
+    	uint8_t senderMac[6];
+    	getMac(pcap, myMac, myIp, senderIp, senderMac);
 
-    eth_arp_packet packet;
-    ArpReply(packet, myMac, senderMac, senderIp, targetIp);
+    	eth_arp_packet packet;
+    	ArpReply(packet, myMac, senderMac, senderIp, targetIp); 
 
-    int res = pcap_sendpacket(pcap, (const u_char*)&packet, sizeof(packet));
-    if (res != 0) {
-    fprintf(stderr, "send error: %s\n", pcap_geterr(pcap));
-    }	
+    	int res = pcap_sendpacket(pcap, (const u_char*)&packet, sizeof(packet));
+    	if (res != 0) {
+    	fprintf(stderr, "send error: %s\n", pcap_geterr(pcap));
+    	}
+	
     pcap_close(pcap);
 }
